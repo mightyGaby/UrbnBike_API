@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset=utf-8 />
+
   <title>UrbnBikeApi</title>
+
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 
@@ -17,26 +21,25 @@
   <nav class="navbar navbar-default navbar-fixed-top"> <!--navbar-fixed-top-->
   <div class="container-fluid">
     <div class="navbar-header">
-      <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-star"></span> </a>
-      <a class="navbar-brand" href="#"> My App Title </a>
+      <a class="navbar-brand" href="#"><span></span> </a>
+      <a class="navbar-brand" href="#"> Urbn Bike </a>
   </div> <!--end navbar branding-->
   <div class="collapse navbar-collapse">
     <ul class="nav navbar-nav">
-      <li><a href="/">Home</a></li>
-      <li><a href="/">Home</a></li>
-      <li><a href="/">Home</a></li>
+      <li id='geolocate'><a href="/">Locate bikeracks near me!</a></li>
     </ul>
-    <div class="col-sm-3 col-md-3 pull-right">
-            <form class="navbar-form" role="search">
+    <div class="pull-right">
+            <form class="navbar-form" >
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search Address">
+                    <input id="address" type="text" class="form-control" placeholder="Search Address">
                     <div class="input-group-btn">
-                        <button class="btn btn-default" id="address" type="submit" onclick="searchLocation()"><i class="glyphicon glyphicon-search"></i></button>
+                        <button class="btn btn-default" id="search-location" type="button"></button>
                     </div>
                 </div>
             </form>
         </div>
   </div> <!--end navbar links -->
+</div>
 </nav>
 
 <%= yield %>

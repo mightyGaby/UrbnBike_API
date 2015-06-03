@@ -33,8 +33,8 @@ class BikeracksController < ApplicationController
           coordinates: [bikerack.lng, bikerack.lat]
         },
         properties: {
+          title: bikerack.address,
           name: bikerack.neighborhood,
-          address: bikerack.address,
           :'marker-color' => '#00607d',
           :'marker-symbol' => 'circle',
           :'marker-size' => 'medium'
