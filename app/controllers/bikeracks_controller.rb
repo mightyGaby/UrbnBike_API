@@ -16,6 +16,10 @@ class BikeracksController < ApplicationController
     render json: @bikerack
   end
 
+  def destroy
+    Bikerack.destroy(params[:id])
+  end
+
   def api
     @bikeracks = Bikerack.all
     render json: @bikeracks
@@ -33,11 +37,12 @@ class BikeracksController < ApplicationController
           coordinates: [bikerack.lng, bikerack.lat]
         },
         properties: {
-          title: bikerack.address,
-          name: bikerack.neighborhood,
+          title: bikerack.neighborhood,
+          description: bikerack.address,
           :'marker-color' => '#00607d',
           :'marker-symbol' => 'circle',
-          :'marker-size' => 'medium'
+          :'marker-size' => 'small',
+          :className => "marker"
         }
       }
     end
@@ -45,7 +50,7 @@ class BikeracksController < ApplicationController
   end
 
   def bikerack_params
-      params.require(:bikerack).permit(:address, :neighborhood, :lat, :lng, :location)
+      params.require(:bikerack).permit(:address, :neighborhood, :lat, :lng, :location, :comment_id, :warning_id)
   end
 
 end

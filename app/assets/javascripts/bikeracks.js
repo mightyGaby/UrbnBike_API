@@ -1,28 +1,102 @@
 var map;
+var markers;
+var newMarker;
+var downTime;
+var upTime;
 
 $(document).ready(function(){
 
-  //creates new map
-  console.log("map loaded!")
+  //=========================================CREATES MAP
   L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
   map = L.mapbox.map('map', 'mapbox.streets')
       .setView([41.893974, -87.627945], 14);
       map.zoomControl.setPosition('bottomleft');
 
-  //loads markers from database
-  // $.ajax({
-  // dataType: 'text',
-  // url: '/api/markers.json',
-  // success: function(data) {
-  //   var geojson;
-  //   geojson = $.parseJSON(data);
-  //   console.log(geojson)
-  //     map.featureLayer.setGeoJSON(geojson);  }
-  // });
+  console.log("map loaded!")
 
-  //centers on users's location
+  var geojson;
+
+
+  //=========================================LOADS MARKERS FROM DATABASE
+  function getData() {
+    return $.ajax({
+      url: '/api/markers.json',
+      type: 'get',
+      dataType: 'text'
+      });
+  }
+
+
+  function renderMarkers(data) {
+    geojson = $.parseJSON(data);
+    console.log(geojson);
+    markers = L.mapbox.featureLayer()
+      .setGeoJSON({
+        type: 'FeatureCollection',
+        features: geojson
+      })
+      .addTo(map);
+
+    markers.eachLayer(function(m) {
+      // // Shorten m.feature.properties to p for convenience.
+      // var p = m.feature.properties;
+
+      m.on("dblclick", function(){
+        console.log(m);
+        m.bindPopup('hello!');
+        console.log('hey!')
+        });
+    });
+
+  } // end renderMarkers
+
+  getData().done(renderMarkers);
+
+
+
+  //=========================================ADD MARKER ON CLICK & HOLD
+  map.on('mousedown', function mouseState(e) {
+    downTime = Date.now()
+  });
+
+  map.on('mouseup', function(e){
+    upTime = Date.now();
+    if ((downTime+1000) < upTime){
+      console.log(downTime)
+      console.log(upTime)
+
+      var latlng = e.latlng;
+      newLocation(latlng.lng, latlng.lat);
+    }
+    else{ console.log("click-hold not long enough")}
+  });
+
+  $('#save-marker').on('click', function(){
+    console.log(downTime);
+    console.log(upTime);
+    $.ajax({
+      url: '/bikeracks',
+      type: 'post',
+      dataType: 'json',
+      data: {
+        bikerack: {
+          address: "TEST",
+          neighborhood: "TEST",
+          lat: latlng.lat,
+          lng: latlng.lng,
+          location: latlng.toString()
+        }
+      },
+      success: function(data) {
+        console.log("success!!");
+        alert('location saved!');
+      }
+    });
+  });
+
+  //=========================================CENTER MAP ON USER LOCATION
   var geolocate = document.getElementById('geolocate');
-  var myLayer = L.mapbox.featureLayer().addTo(map);
+  var locationLayer = L.mapbox.featureLayer().addTo(map);
   if (!navigator.geolocation) {
       alert('Geolocation is not available');
   } else {
@@ -32,13 +106,10 @@ $(document).ready(function(){
           map.locate();
       };
   }
-
-  // Once we've got a position, zoom and center the map
-  // on it, and add a single marker.
   map.on('locationfound', function(e) {
       map.fitBounds(e.bounds);
 
-      myLayer.setGeoJSON({
+      locationLayer.setGeoJSON({
           type: 'Feature',
           geometry: {
               type: 'Point',
@@ -58,79 +129,59 @@ $(document).ready(function(){
       alert('Position could not be found');
   });
 
-  var downTime;
-  map.on('mousedown', function mouseState(e) {
-    downTime = Date.now()
-  });
-
-  map.on('mouseup', function(e){
-
-    var upTime = Date.now();
-    if ((downTime+500) < upTime){
-      console.log(downTime)
-      console.log(upTime)
-
-      var latlng = e.latlng;
-      newLocation(latlng.lng, latlng.lat);
-      $.ajax({
-        url: '/bikeracks',
-        type: 'post',
-        dataType: 'json',
-        data: {
-          bikerack: {
-            address: "TEST",
-            neighborhood: "TEST",
-            lat: latlng.lat,
-            lng: latlng.lng,
-            location: latlng.toString()
-          }
-        },
-        success: function(data) {
-          console.log("success!!");
-        }
-      });
-
-    }
-
-  })
-
-  // RETURNS COORDINATES FROM LOCATION SEARCH VIA FORM
+  //=========================================CENTERS MAP ON LOCATION SEARCH VIA FORM
   $('#search-location').on('click', function(){
+    var searchLayer = L.mapbox.featureLayer().addTo(map);
     var geocoder = L.mapbox.geocoder('mapbox.places');
     var query = $("#address").val()
     console.log(query)
     geocoder.query(query, showMap);
 
     function showMap(err, data) {
-        // The geocoder can return an area, like a city, or a
-        // point, like an address. Here we handle both cases,
-        // by fitting the map bounds to an area or zooming to a point.
-        if (data.lbounds) {
-            map.fitBounds(data.lbounds);
-        } else if (data.latlng) {
-            map.setView([data.latlng[0], data.latlng[1]], 25);
-        }
+      searchLayer.setGeoJSON({
+          type: 'Feature',
+          geometry: {
+              type: 'Point',
+              coordinates: [data.latlng[1], data.latlng[0]],
+          },
+          properties: {
+              'title': 'Your Search',
+              'marker-size': 'large',
+              'marker-color': '#66ccff',
+              'marker-symbol': 'embassy'
+          }
+      });
+
+      if (data.lbounds) {
+          map.fitBounds(data.lbounds);
+      } else if (data.latlng) {
+          map.setView([data.latlng[1], data.latlng[0]], 20);
+      }
     }
+
   });
+
 
 }); //end of document.ready
 
 
 //creates new marker from click
 function newLocation(lng, lat){
-  L.mapbox.featureLayer({
+  downTime = 0;
+  upTime = 0;
+  newMarker = L.mapbox.featureLayer({
     type: 'Feature',
     geometry: {
         type: 'Point',
-        coordinates: [
-          lng,
-          lat
-        ]
+        coordinates: [ lng, lat ]
     },
     properties: {
         'marker-size': 'large',
         'marker-color': '#BE9A6B',
-        'marker-symbol': 'bicycle'
-    }
-  }).addTo(map);
+        'marker-symbol': 'bicycle',
+        'className': 'newMarker'
+    },
+  })
+  newMarker.bindPopup('hey!').openPopup().addTo(map);
+
 };

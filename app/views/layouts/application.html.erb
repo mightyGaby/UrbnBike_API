@@ -12,6 +12,11 @@
   <!-- mapbox -->
   <script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.js'></script>
   <link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.9/mapbox.css' rel='stylesheet' />
+  <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/leaflet.markercluster.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.css' rel='stylesheet' />
+  <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-markercluster/v0.4.0/MarkerCluster.Default.css' rel='stylesheet' />
+  <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
 
   <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
   <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
@@ -31,9 +36,9 @@
     <div class="pull-right">
             <form class="navbar-form" >
                 <div class="input-group">
-                    <input id="address" type="text" class="form-control" placeholder="Search Address">
+                    <input id="address" type="text" class="form-control" placeholder="Destination...">
                     <div class="input-group-btn">
-                        <button class="btn btn-default" id="search-location" type="button"></button>
+                        <button class="btn btn-default" id="search-location" type="button">Search!</button>
                     </div>
                 </div>
             </form>

@@ -18,4 +18,14 @@ namespace :db do
 
   end # task :export_data
 
+  desc "delete test bikeracks from database"
+  task :cleanup do
+    bikeracks = Bikerack.all
+    bikeracks.map do |bikerack|
+      if bikerack.address == 'TEST'
+        bikerack.destroy
+      end
+    end
+  end #task :cleanup
+
 end

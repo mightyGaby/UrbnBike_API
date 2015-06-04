@@ -1,0 +1,2 @@
+class WarningsController < ApplicationController
+end
