@@ -43,9 +43,15 @@ $(document).ready(function(){
 
       m.on("dblclick", function(){
         console.log(m);
-        m.bindPopup('hello!');
-        console.log('hey!')
-        });
+
+        setTimeout(function(){
+          var tabs = document.createElement('div');
+          tabs.className = 'tabs-ui';
+
+          m.bindPopup(tabs).openPopup();
+          console.log('hey!')
+        }, 800);
+      });
     });
 
   } // end renderMarkers
@@ -182,6 +188,6 @@ function newLocation(lng, lat){
         'className': 'newMarker'
     },
   })
-  newMarker.bindPopup('hey!').openPopup().addTo(map);
+  newMarker.bindPopup('<button id="save-marker"> Save location </button>').openPopup().addTo(map);
 
 };
