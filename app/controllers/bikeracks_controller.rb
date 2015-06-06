@@ -41,7 +41,7 @@ class BikeracksController < ApplicationController
           description: bikerack.address,
           :'marker-color' => '#00607d',
           :'marker-symbol' => 'circle',
-          :'marker-size' => 'small',
+          :'marker-size' => 'medium',
           :className => "marker"
         }
       }

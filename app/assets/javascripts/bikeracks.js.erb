@@ -7,8 +7,9 @@ var downTime;
 var upTime;
 var clusterGroup;
 
-var locateZoom = 18;
+var locateZoom = 16;
 
+var app = app || {};
 
 $(document).ready(function(){
 
@@ -23,10 +24,14 @@ $(document).ready(function(){
   getData().done(initializeMarkers);
 
   map.addEventListener('viewreset', function(){
-    console.log("zoom: " + map.getZoom())
-    console.log("map move!")
+    console.log("zoom: " + map.getZoom());
+    console.log("map move!");
+
+    var mapZoom = map.getZoom();
     map.removeLayer(markers);
+
     renderMarkers();
+
   });
 
 
@@ -87,13 +92,13 @@ $(document).ready(function(){
       })
       .eachLayer(function(layer) {
         tempLayer.addLayer(layer);
-      });
+    });
 
-      tempLayer.eachLayer(function(marker) {
-        if (mapBounds.contains(marker.getLatLng())) {
-          inBounds.push(marker.feature);
-        }
-      })
+    tempLayer.eachLayer(function(marker) {
+      if (mapBounds.contains(marker.getLatLng())) {
+        inBounds.push(marker.feature);
+      }
+    })
 
     markers = new L.MarkerClusterGroup({ chunkedLoading: true });
 
@@ -108,31 +113,6 @@ $(document).ready(function(){
     map.addLayer(markers);
   }
 
-  // markers.eachLayer(function(m) {
-  //   m.on("dblclick", function(){
-  //     console.log(m);
-  //
-  //     m.bindPopup('<button id="warning-btn">Add Warning</button>').addTo(map);
-  //
-  //     // $('#warning-btn').on('click', function(){
-  //     //   console.log('clicked!')
-  //     //   $.ajax({
-  //     //     url: '/api/warnings',
-  //     //     type: 'post',
-  //     //     data:{
-  //     //       warning: {
-  //     //         date_added: Date.now(),
-  //     //         warning_type: 1
-  //     //       }
-  //     //     },
-  //     //     success: function(data){
-  //     //       console.log(data);
-  //     //       console.log('warning added!');
-  //     //     }
-  //     //   });
-  //     // })
-  //   });
-  // });
   //=========================================ADD MARKER ON CLICK & HOLD
   map.on('mousedown', function mouseState(e) {
     downTime = Date.now()
@@ -150,29 +130,6 @@ $(document).ready(function(){
     }
     else{ console.log("click-hold not long enough")}
     downTime = false;
-  });
-
-  $('#save-marker').on('click', function(){
-    console.log(downTime);
-    console.log(upTime);
-    $.ajax({
-      url: '/bikeracks',
-      type: 'post',
-      dataType: 'json',
-      data: {
-        bikerack: {
-          address: "TEST",
-          neighborhood: "TEST",
-          lat: latlng.lat,
-          lng: latlng.lng,
-          location: latlng.toString()
-        }
-      },
-      success: function(data) {
-        console.log("success!!");
-        alert('location saved!');
-      }
-    });
   });
 
   //=========================================CENTER MAP ON USER LOCATION
@@ -202,7 +159,7 @@ $(document).ready(function(){
           }
       });
 
-      markers.addData(searchLocation);
+      // map.addLayer(searchLocation);
   });
 
   // If the user chooses not to allow their location
@@ -241,31 +198,52 @@ $(document).ready(function(){
           map.setView([data.latlng[1], data.latlng[0]], locateZoom);
       }
     }
-
-    markers.addData(myLocation);
+    myLocation.addTo(map);
 
   });
 
 
+  //creates new marker from click
+  function newLocation(lng, lat){
+    newMarker = L.mapbox.featureLayer({
+      type: 'Feature',
+      geometry: {
+          type: 'Point',
+          coordinates: [ lng, lat ]
+      },
+      properties: {
+          'title': '<button id="save-marker"> Save location </button>',
+          'marker-size': 'large',
+          'marker-color': '#BE9A6B',
+          'marker-symbol': 'bicycle',
+          'className': 'newMarker'
+      },
+      draggable: true
+    });
+    newMarker.addTo(markers);
+
+    $('#save-marker').on('click', function(){
+      console.log(downTime);
+      console.log(upTime);
+      $.ajax({
+        url: '/bikeracks',
+        type: 'post',
+        dataType: 'json',
+        data: {
+          bikerack: {
+            address: "TEST",
+            neighborhood: "TEST",
+            lat: latlng.lat,
+            lng: latlng.lng,
+            location: latlng.toString()
+          }
+        },
+        success: function(data) {
+          console.log("success!!");
+          alert('location saved!');
+        }
+      });
+    });
+
+  };
 }); //end of document.ready
-
-
-//creates new marker from click
-function newLocation(lng, lat){
-  newMarker = L.mapbox.featureLayer({
-    type: 'Feature',
-    geometry: {
-        type: 'Point',
-        coordinates: [ lng, lat ]
-    },
-    properties: {
-        'marker-size': 'large',
-        'marker-color': '#BE9A6B',
-        'marker-symbol': 'bicycle',
-        'className': 'newMarker',
-    },
-    draggable: true
-  })
-  newMarker.bindPopup('<button id="save-marker"> Save location </button>').addTo(map);
-
-};
