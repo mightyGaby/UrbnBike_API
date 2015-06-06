@@ -44,10 +44,12 @@ ActiveRecord::Schema.define(version: 20150604194316) do
   end
 
   create_table "warnings", force: :cascade do |t|
-    t.datetime "date_added"
-    t.integer  "warning_type", default: 4
+    t.integer  "bikerack_id"
+    t.integer  "warning_type", default: 5
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
   end
+
+  add_index "warnings", ["bikerack_id"], name: "index_warnings_on_bikerack_id", using: :btree
 
 end

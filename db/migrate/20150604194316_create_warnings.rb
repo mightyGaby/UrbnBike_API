@@ -1,8 +1,8 @@
 class CreateWarnings < ActiveRecord::Migration
   def change
     create_table :warnings do |t|
-      t.datetime :date_added
-      t.integer :warning_type, default: 4
+      t.belongs_to :bikerack, index: true
+      t.integer :warning_type, default: 5
       t.timestamps null: false
     end
   end

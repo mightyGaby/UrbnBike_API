@@ -1,8 +1,14 @@
 var map;
-var markers;
+var mapBounds;
+var geojson;
+var markers
 var newMarker;
 var downTime;
 var upTime;
+var clusterGroup;
+
+var locateZoom = 18;
+
 
 $(document).ready(function(){
 
@@ -14,7 +20,11 @@ $(document).ready(function(){
 
   console.log("map loaded!")
 
-  var geojson;
+  getData();
+
+  map.addEventListener('viewreset', function(){
+    getData().done(renderPartial);
+  });
 
 
   //=========================================LOADS MARKERS FROM DATABASE
@@ -22,44 +32,156 @@ $(document).ready(function(){
     return $.ajax({
       url: '/api/markers.json',
       type: 'get',
-      dataType: 'text'
-      });
+      dataType: 'text',
+      success: function(data){
+        geojson = $.parseJSON(data);
+        // initializeView(geojson);
+
+        var myLayer = L.mapbox.featureLayer()
+
+        console.log(geojson.length);
+        mapBounds = map.getBounds();
+        var inBounds = [];
+
+        L.geoJson({
+            type: 'FeatureCollection',
+            features: geojson
+          })
+          .eachLayer(function(layer) {
+            myLayer.addLayer(layer);
+          });
+
+          myLayer.eachLayer(function(marker) {
+            if (mapBounds.contains(marker.getLatLng())) {
+                inBounds.push(marker);
+              }
+          })
+
+        console.log(inBounds)
+
+        // console.log(inBounds)
+        clusterGroup = new L.MarkerClusterGroup({
+          chunkedLoading: true
+        });
+
+        L.geoJson({
+            type: 'FeatureCollection',
+            features: geojson
+          })
+          .addTo(map)
+          .eachLayer(function(layer) {
+            clusterGroup.addLayer(layer);
+          });
+
+      }
+    });
   }
 
+  // function renderPartial(data){
+  //   var inBounds = [];
+  //
+  //   mapBounds = map.getBounds();
+  //   console.log(mapBounds);
+  //
+  //   clusterGroup.eachLayer(function(marker) {
+  //     if (mapBounds.contains(marker.getLatLng())) {
+  //         inBounds.push(marker.options.title);
+  //       }
+  //   })
+  //
+  //
+  //   map.removeLayer();
+  //
+  //   L.geoJson({
+  //       type: 'FeatureCollection',
+  //       features: inBounds
+  //     })
+  //     // .addTo(map);
+  //     .eachLayer(function(layer) {
+  //       clusterGroup.addLayer(layer);
+  //     });
+  //     map.addLayer(clusterGroup);
+  //   });
+  //
+  // };
 
-  function renderMarkers(data) {
-    geojson = $.parseJSON(data);
-    console.log(geojson);
-    markers = L.mapbox.featureLayer()
-      .setGeoJSON({
+      //
+      //
+      // markers.setGeoJSON({
+      //     type: 'FeatureCollection',
+      //     features: geoPartOne
+      //   })
+      //   .eachLayer(function(layer) {
+      //     clusterGroup.addLayer(layer);
+      //   });
+
+
+  function initializeView(data) {
+    var myLayer = L.mapbox.featureLayer()
+
+    console.log(data.length);
+    mapBounds = map.getBounds();
+    var inBounds = [];
+
+    L.geoJson({
         type: 'FeatureCollection',
         features: geojson
       })
-      .addTo(map);
-
-    markers.eachLayer(function(m) {
-      // // Shorten m.feature.properties to p for convenience.
-      // var p = m.feature.properties;
-
-      m.on("dblclick", function(){
-        console.log(m);
-
-        setTimeout(function(){
-          var tabs = document.createElement('div');
-          tabs.className = 'tabs-ui';
-
-          m.bindPopup(tabs).openPopup();
-          console.log('hey!')
-        }, 800);
+      .eachLayer(function(layer) {
+        myLayer.addLayer(layer);
       });
+
+      myLayer.eachLayer(function(marker) {
+        if (mapBounds.contains(marker.getLatLng())) {
+            inBounds.push(marker);
+          }
+      })
+
+    console.log(inBounds)
+
+    // console.log(inBounds)
+    clusterGroup = new L.MarkerClusterGroup({
+      chunkedLoading: true
     });
 
-  } // end renderMarkers
+    L.geoJson({
+        type: 'FeatureCollection',
+        features: inBounds
+      })
+      .addTo(map)
+      .eachLayer(function(layer) {
+        clusterGroup.addLayer(layer);
+      });
 
-  getData().done(renderMarkers);
+  }
 
 
 
+  // markers.eachLayer(function(m) {
+  //   m.on("dblclick", function(){
+  //     console.log(m);
+  //
+  //     m.bindPopup('<button id="warning-btn">Add Warning</button>').addTo(map);
+  //
+  //     // $('#warning-btn').on('click', function(){
+  //     //   console.log('clicked!')
+  //     //   $.ajax({
+  //     //     url: '/api/warnings',
+  //     //     type: 'post',
+  //     //     data:{
+  //     //       warning: {
+  //     //         date_added: Date.now(),
+  //     //         warning_type: 1
+  //     //       }
+  //     //     },
+  //     //     success: function(data){
+  //     //       console.log(data);
+  //     //       console.log('warning added!');
+  //     //     }
+  //     //   });
+  //     // })
+  //   });
+  // });
   //=========================================ADD MARKER ON CLICK & HOLD
   map.on('mousedown', function mouseState(e) {
     downTime = Date.now()
@@ -67,7 +189,8 @@ $(document).ready(function(){
 
   map.on('mouseup', function(e){
     upTime = Date.now();
-    if ((downTime+1000) < upTime){
+    if (downTime && (downTime+1000) < upTime){
+
       console.log(downTime)
       console.log(upTime)
 
@@ -75,6 +198,7 @@ $(document).ready(function(){
       newLocation(latlng.lng, latlng.lat);
     }
     else{ console.log("click-hold not long enough")}
+    downTime = false;
   });
 
   $('#save-marker').on('click', function(){
@@ -102,7 +226,6 @@ $(document).ready(function(){
 
   //=========================================CENTER MAP ON USER LOCATION
   var geolocate = document.getElementById('geolocate');
-  var locationLayer = L.mapbox.featureLayer().addTo(map);
   if (!navigator.geolocation) {
       alert('Geolocation is not available');
   } else {
@@ -115,7 +238,7 @@ $(document).ready(function(){
   map.on('locationfound', function(e) {
       map.fitBounds(e.bounds);
 
-      locationLayer.setGeoJSON({
+      var searchLocation = ({
           type: 'Feature',
           geometry: {
               type: 'Point',
@@ -127,6 +250,8 @@ $(document).ready(function(){
               'marker-symbol': 'star'
           }
       });
+
+      myLayer.addData(searchLocation);
   });
 
   // If the user chooses not to allow their location
@@ -137,14 +262,13 @@ $(document).ready(function(){
 
   //=========================================CENTERS MAP ON LOCATION SEARCH VIA FORM
   $('#search-location').on('click', function(){
-    var searchLayer = L.mapbox.featureLayer().addTo(map);
     var geocoder = L.mapbox.geocoder('mapbox.places');
     var query = $("#address").val()
     console.log(query)
     geocoder.query(query, showMap);
 
     function showMap(err, data) {
-      searchLayer.setGeoJSON({
+      var myLocation = ({
           type: 'Feature',
           geometry: {
               type: 'Point',
@@ -160,10 +284,13 @@ $(document).ready(function(){
 
       if (data.lbounds) {
           map.fitBounds(data.lbounds);
+          map.setZoom(locateZoom);
       } else if (data.latlng) {
-          map.setView([data.latlng[1], data.latlng[0]], 20);
+          map.setView([data.latlng[1], data.latlng[0]], locateZoom);
       }
     }
+
+    myLayer.addData(myLocation);
 
   });
 
@@ -173,8 +300,6 @@ $(document).ready(function(){
 
 //creates new marker from click
 function newLocation(lng, lat){
-  downTime = 0;
-  upTime = 0;
   newMarker = L.mapbox.featureLayer({
     type: 'Feature',
     geometry: {
@@ -185,9 +310,9 @@ function newLocation(lng, lat){
         'marker-size': 'large',
         'marker-color': '#BE9A6B',
         'marker-symbol': 'bicycle',
-        'className': 'newMarker'
+        'className': 'newMarker',
     },
   })
-  newMarker.bindPopup('<button id="save-marker"> Save location </button>').openPopup().addTo(map);
+  newMarker.bindPopup('<button id="save-marker"> Save location </button>').addTo(map);
 
 };
