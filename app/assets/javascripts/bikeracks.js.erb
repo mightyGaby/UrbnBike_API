@@ -1,7 +1,7 @@
 var map;
 var mapBounds;
 var geojson;
-var markers
+var markers;
 var newMarker;
 var downTime;
 var upTime;
@@ -20,10 +20,13 @@ $(document).ready(function(){
 
   console.log("map loaded!")
 
-  getData();
+  getData().done(initializeMarkers);
 
   map.addEventListener('viewreset', function(){
-    getData().done(renderPartial);
+    console.log("zoom: " + map.getZoom())
+    console.log("map move!")
+    map.removeLayer(markers);
+    renderMarkers();
   });
 
 
@@ -35,91 +38,14 @@ $(document).ready(function(){
       dataType: 'text',
       success: function(data){
         geojson = $.parseJSON(data);
-        // initializeView(geojson);
-
-        var myLayer = L.mapbox.featureLayer()
-
-        console.log(geojson.length);
-        mapBounds = map.getBounds();
-        var inBounds = [];
-
-        L.geoJson({
-            type: 'FeatureCollection',
-            features: geojson
-          })
-          .eachLayer(function(layer) {
-            myLayer.addLayer(layer);
-          });
-
-          myLayer.eachLayer(function(marker) {
-            if (mapBounds.contains(marker.getLatLng())) {
-                inBounds.push(marker);
-              }
-          })
-
-        console.log(inBounds)
-
-        // console.log(inBounds)
-        clusterGroup = new L.MarkerClusterGroup({
-          chunkedLoading: true
-        });
-
-        L.geoJson({
-            type: 'FeatureCollection',
-            features: geojson
-          })
-          .addTo(map)
-          .eachLayer(function(layer) {
-            clusterGroup.addLayer(layer);
-          });
-
+        console.log("Bikerack geojson data returned!");
       }
     });
   }
 
-  // function renderPartial(data){
-  //   var inBounds = [];
-  //
-  //   mapBounds = map.getBounds();
-  //   console.log(mapBounds);
-  //
-  //   clusterGroup.eachLayer(function(marker) {
-  //     if (mapBounds.contains(marker.getLatLng())) {
-  //         inBounds.push(marker.options.title);
-  //       }
-  //   })
-  //
-  //
-  //   map.removeLayer();
-  //
-  //   L.geoJson({
-  //       type: 'FeatureCollection',
-  //       features: inBounds
-  //     })
-  //     // .addTo(map);
-  //     .eachLayer(function(layer) {
-  //       clusterGroup.addLayer(layer);
-  //     });
-  //     map.addLayer(clusterGroup);
-  //   });
-  //
-  // };
+  function initializeMarkers() {
+    clusterGroup = new L.MarkerClusterGroup({ chunkedLoading: true });
 
-      //
-      //
-      // markers.setGeoJSON({
-      //     type: 'FeatureCollection',
-      //     features: geoPartOne
-      //   })
-      //   .eachLayer(function(layer) {
-      //     clusterGroup.addLayer(layer);
-      //   });
-
-
-  function initializeView(data) {
-    var myLayer = L.mapbox.featureLayer()
-
-    console.log(data.length);
     mapBounds = map.getBounds();
     var inBounds = [];
 
@@ -128,34 +54,59 @@ $(document).ready(function(){
         features: geojson
       })
       .eachLayer(function(layer) {
-        myLayer.addLayer(layer);
-      });
-
-      myLayer.eachLayer(function(marker) {
-        if (mapBounds.contains(marker.getLatLng())) {
-            inBounds.push(marker);
-          }
-      })
-
-    console.log(inBounds)
-
-    // console.log(inBounds)
-    clusterGroup = new L.MarkerClusterGroup({
-      chunkedLoading: true
-    });
-
-    L.geoJson({
-        type: 'FeatureCollection',
-        features: inBounds
-      })
-      .addTo(map)
-      .eachLayer(function(layer) {
         clusterGroup.addLayer(layer);
       });
 
+      clusterGroup.eachLayer(function(marker) {
+        if (mapBounds.contains(marker.getLatLng())) {
+          inBounds.push(marker.feature);
+        }
+      })
+
+    markers = new L.MarkerClusterGroup({ chunkedLoading: true });
+
+    L.mapbox.featureLayer({
+        type: 'FeatureCollection',
+        features: inBounds
+      })
+      .eachLayer(function(layer) {
+        markers.addLayer(layer);
+      });
+
+    map.addLayer(markers);
   }
 
+  function renderMarkers() {
+    var tempLayer = L.mapbox.featureLayer()
+    mapBounds = map.getBounds();
+    var inBounds = [];
 
+    L.geoJson({
+        type: 'FeatureCollection',
+        features: geojson
+      })
+      .eachLayer(function(layer) {
+        tempLayer.addLayer(layer);
+      });
+
+      tempLayer.eachLayer(function(marker) {
+        if (mapBounds.contains(marker.getLatLng())) {
+          inBounds.push(marker.feature);
+        }
+      })
+
+    markers = new L.MarkerClusterGroup({ chunkedLoading: true });
+
+    L.mapbox.featureLayer({
+        type: 'FeatureCollection',
+        features: inBounds
+      })
+      .eachLayer(function(layer) {
+        markers.addLayer(layer);
+      });
+
+    map.addLayer(markers);
+  }
 
   // markers.eachLayer(function(m) {
   //   m.on("dblclick", function(){
@@ -251,7 +202,7 @@ $(document).ready(function(){
           }
       });
 
-      myLayer.addData(searchLocation);
+      markers.addData(searchLocation);
   });
 
   // If the user chooses not to allow their location
@@ -279,7 +230,8 @@ $(document).ready(function(){
               'marker-size': 'large',
               'marker-color': '#66ccff',
               'marker-symbol': 'embassy'
-          }
+          },
+          draggable: true
       });
 
       if (data.lbounds) {
@@ -290,7 +242,7 @@ $(document).ready(function(){
       }
     }
 
-    myLayer.addData(myLocation);
+    markers.addData(myLocation);
 
   });
 
@@ -312,6 +264,7 @@ function newLocation(lng, lat){
         'marker-symbol': 'bicycle',
         'className': 'newMarker',
     },
+    draggable: true
   })
   newMarker.bindPopup('<button id="save-marker"> Save location </button>').addTo(map);
 
