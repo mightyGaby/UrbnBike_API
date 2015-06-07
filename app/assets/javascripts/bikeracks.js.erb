@@ -1,13 +1,12 @@
 var map;
 var mapBounds;
 var geojson;
-var markers;
-var newMarker;
 var downTime;
 var upTime;
-var clusterGroup;
+var clusterLayer;
 
-var locateZoom = 16;
+var inBounds = [];
+var locateZoom = 15;
 
 var app = app || {};
 
@@ -21,17 +20,15 @@ $(document).ready(function(){
 
   console.log("map loaded!")
 
-  getData().done(initializeMarkers);
+  getData().done(markerClusters);
 
   map.addEventListener('viewreset', function(){
     console.log("zoom: " + map.getZoom());
     console.log("map move!");
+    console.log("data points: " + inBounds.length)
 
     var mapZoom = map.getZoom();
-    map.removeLayer(markers);
-
-    renderMarkers();
-
+    markerClusters();
   });
 
 
@@ -48,43 +45,10 @@ $(document).ready(function(){
     });
   }
 
-  function initializeMarkers() {
-    clusterGroup = new L.MarkerClusterGroup({ chunkedLoading: true });
-
-    mapBounds = map.getBounds();
-    var inBounds = [];
-
-    L.geoJson({
-        type: 'FeatureCollection',
-        features: geojson
-      })
-      .eachLayer(function(layer) {
-        clusterGroup.addLayer(layer);
-      });
-
-      clusterGroup.eachLayer(function(marker) {
-        if (mapBounds.contains(marker.getLatLng())) {
-          inBounds.push(marker.feature);
-        }
-      })
-
-    markers = new L.MarkerClusterGroup({ chunkedLoading: true });
-
-    L.mapbox.featureLayer({
-        type: 'FeatureCollection',
-        features: inBounds
-      })
-      .eachLayer(function(layer) {
-        markers.addLayer(layer);
-      });
-
-    map.addLayer(markers);
-  }
-
-  function renderMarkers() {
+  function getInBounds(){
     var tempLayer = L.mapbox.featureLayer()
     mapBounds = map.getBounds();
-    var inBounds = [];
+    inBounds = [];
 
     L.geoJson({
         type: 'FeatureCollection',
@@ -99,19 +63,47 @@ $(document).ready(function(){
         inBounds.push(marker.feature);
       }
     })
+  }
 
-    markers = new L.MarkerClusterGroup({ chunkedLoading: true });
+  function markerClusters() {
+    getInBounds();
+
+    clusterLayer = new L.MarkerClusterGroup({
+      chunkedLoading: true,
+      disableClusteringAtZoom: 16,
+      });
 
     L.mapbox.featureLayer({
         type: 'FeatureCollection',
         features: inBounds
       })
       .eachLayer(function(layer) {
-        markers.addLayer(layer);
+        clusterLayer.addLayer(layer);
       });
 
-    map.addLayer(markers);
+    map.addLayer(clusterLayer);
+
+    clusterLayer.on('click', function(e) {
+      map.panTo(e.layer.getLatLng());
+    });
+
   }
+
+  // //=========================================RENDER MAREKERS NOT IN CLUSTER
+  // function renderMarkers() {
+  //   getInBounds();
+  //
+  //   markerLayer = L.mapbox.featureLayer({
+  //       type: 'FeatureCollection',
+  //       features: inBounds
+  //   })
+  //   .addTo(map);
+  //
+  //   markerLayer.on('click', function(e) {
+  //     map.panTo(e.layer.getLatLng());
+  //   });
+  //
+  // }
 
   //=========================================ADD MARKER ON CLICK & HOLD
   map.on('mousedown', function mouseState(e) {
@@ -127,6 +119,12 @@ $(document).ready(function(){
 
       var latlng = e.latlng;
       newLocation(latlng.lng, latlng.lat);
+
+      var popup = L.popup()
+      .setLatLng(newLocation);
+      .setContent('<button>new marker!</button>')
+      .openOn(map);
+
     }
     else{ console.log("click-hold not long enough")}
     downTime = false;
@@ -135,115 +133,97 @@ $(document).ready(function(){
   //=========================================CENTER MAP ON USER LOCATION
   var geolocate = document.getElementById('geolocate');
   if (!navigator.geolocation) {
-      alert('Geolocation is not available');
+    alert('Geolocation is not available');
   } else {
-      geolocate.onclick = function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          map.locate();
-      };
+    geolocate.onclick = function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      map.locate();
+    };
   }
   map.on('locationfound', function(e) {
-      map.fitBounds(e.bounds);
+    map.fitBounds(e.bounds);
 
-      var searchLocation = ({
-          type: 'Feature',
-          geometry: {
-              type: 'Point',
-              coordinates: [e.latlng.lng, e.latlng.lat],
-          },
-          properties: {
-              'title': 'Here I am!',
-              'marker-color': '#ff8888',
-              'marker-symbol': 'star'
-          }
-      });
+    L.mapbox.featureLayer({
+      type: 'Feature',
+      geometry: {
+          type: 'Point',
+          coordinates: [e.latlng.lng, e.latlng.lat],
+      },
+      properties: {
+          'title': 'Here I am!',
+          'marker-color': '#ff8888',
+          'marker-symbol': 'star'
+      }
+    }).addTo(map);
 
-      // map.addLayer(searchLocation);
   });
 
   // If the user chooses not to allow their location
   // to be shared, display an error message.
   map.on('locationerror', function() {
-      alert('Position could not be found');
+      // alert('Position could not be found');
+    var popup = L.popup()
+    .setLatLng(map.getCenter())
+    .setContent('<p>Having trouble finding your location</br> Hellp us help you, turn on location services</p>')
+    .openOn(map);
   });
 
   //=========================================CENTERS MAP ON LOCATION SEARCH VIA FORM
-  $('#search-location').on('click', function(){
+  $('#search-location').on("submit", function(e){
+    e.preventDefault();
     var geocoder = L.mapbox.geocoder('mapbox.places');
     var query = $("#address").val()
     console.log(query)
     geocoder.query(query, showMap);
 
     function showMap(err, data) {
-      var myLocation = ({
-          type: 'Feature',
-          geometry: {
-              type: 'Point',
-              coordinates: [data.latlng[1], data.latlng[0]],
-          },
-          properties: {
-              'title': 'Your Search',
-              'marker-size': 'large',
-              'marker-color': '#66ccff',
-              'marker-symbol': 'embassy'
-          },
-          draggable: true
-      });
+
+      L.mapbox.featureLayer({
+        type: 'Feature',
+        geometry: {
+            type: 'Point',
+            coordinates: [data.latlng[1], data.latlng[0]],
+        },
+        properties: {
+            'title': 'Your Search',
+            'description': query,
+            'marker-size': 'large',
+            'marker-color': '#66ccff',
+            'marker-symbol': 'embassy'
+        },
+        draggable: true
+
+      }).addTo(map);
 
       if (data.lbounds) {
-          map.fitBounds(data.lbounds);
-          map.setZoom(locateZoom);
+        map.fitBounds(data.lbounds);
       } else if (data.latlng) {
-          map.setView([data.latlng[1], data.latlng[0]], locateZoom);
+        map.setView([data.latlng[1], data.latlng[0]], locateZoom);
       }
     }
-    myLocation.addTo(map);
-
   });
 
+});//END OF DOCUMENT.READY
 
-  //creates new marker from click
-  function newLocation(lng, lat){
-    newMarker = L.mapbox.featureLayer({
-      type: 'Feature',
-      geometry: {
-          type: 'Point',
-          coordinates: [ lng, lat ]
-      },
-      properties: {
-          'title': '<button id="save-marker"> Save location </button>',
-          'marker-size': 'large',
-          'marker-color': '#BE9A6B',
-          'marker-symbol': 'bicycle',
-          'className': 'newMarker'
-      },
-      draggable: true
-    });
-    newMarker.addTo(markers);
 
-    $('#save-marker').on('click', function(){
-      console.log(downTime);
-      console.log(upTime);
-      $.ajax({
-        url: '/bikeracks',
-        type: 'post',
-        dataType: 'json',
-        data: {
-          bikerack: {
-            address: "TEST",
-            neighborhood: "TEST",
-            lat: latlng.lat,
-            lng: latlng.lng,
-            location: latlng.toString()
-          }
-        },
-        success: function(data) {
-          console.log("success!!");
-          alert('location saved!');
-        }
-      });
-    });
+//creates new marker from click
+function newLocation(lng, lat){
+  var newMarker = L.mapbox.featureLayer({
+    type: 'Feature',
+    geometry: {
+        type: 'Point',
+        coordinates: [ lng, lat ]
+    },
+    properties: {
+        'marker-size': 'large',
+        'marker-color': '#BE9A6B',
+        'marker-symbol': 'bicycle',
+        'className': 'newMarker'
+    },
+    draggable: true
+  });
 
-  };
-}); //end of document.ready
+  newMarker.addTo(map);
+
+};
