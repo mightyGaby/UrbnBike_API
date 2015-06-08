@@ -1,15 +1,24 @@
+//map feature variables
 var map;
 var mapBounds;
 var mapZoom;
+var mapHeight;
+
+//html structure variables
+var windowHeight;
+var navbarHeight;
+var mapRow;
+
+//data variables
 var geojson;
-var downTime;
-var upTime;
 var clusterLayer;
 var newMarker;
-
-
-var clicked;
 var inBounds = [];
+
+//logic variables
+var downTime;
+var upTime;
+var clicked;
 var locateZoom = 15;
 
 var app = app || {};
@@ -18,11 +27,16 @@ $(document).ready(function(){
   //=========================================CREATES MAP
   L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
   map = L.mapbox.map('map', 'mapbox.streets')
-      .setView([41.893974, -87.627945], 14);
+    if(window.innerWidth<500){
+      map.setView([41.893974, -87.627945], 16);
+    }
+    else{
+      map.setView([41.893974, -87.627945], 14);
+    }
 
-      L.control.fullscreen().addTo(map);
-      map.zoomControl.setPosition('bottomleft');
-
+  map.zoomControl.setPosition('bottomleft');
+  mapHeight = $('#map').height();
+  mapRow = $('.row-fluid')[0]
 
   console.log("map loaded!")
 
@@ -37,9 +51,21 @@ $(document).ready(function(){
     markerClusters();
   });
 
-  $(function () {
-    $('[data-toggle="popover"]').popover()
-  })
+  window.onresize = function () {
+
+    windowHeight = window.innerHeight;
+    mapHeight = $('#map').height();
+
+    mapRow = $('.row-fluid')[0]
+    $(mapRow).height(mapHeight);
+    console.log("map row height: " + $(mapRow).height());
+    console.log("map height: " + mapHeight);
+
+    // var navbarHeight = $('.navbar')[0]
+    // var navbar = $('.navbar')[0]
+    // $(navbar).height()
+    // $(row).height() + $(navbar).height();
+  }
 
 
   //=========================================LOADS MARKERS FROM DATABASE
@@ -78,10 +104,19 @@ $(document).ready(function(){
   function markerClusters() {
     getInBounds();
 
-    clusterLayer = new L.MarkerClusterGroup({
-      chunkedLoading: true,
-      disableClusteringAtZoom: 16,
+    if( window.innerWidth<500 ){
+
+      clusterLayer = new L.MarkerClusterGroup({
+        chunkedLoading: true,
+        disableClusteringAtZoom: 18,
       });
+    }
+    else{
+      clusterLayer = new L.MarkerClusterGroup({
+        chunkedLoading: true,
+        disableClusteringAtZoom: 16,
+      });
+    }
 
     L.mapbox.featureLayer({
         type: 'FeatureCollection',
@@ -247,6 +282,7 @@ $(document).ready(function(){
       }
     }
   });
+
 
 });//END OF DOCUMENT.READY
 
