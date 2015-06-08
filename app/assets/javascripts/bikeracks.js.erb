@@ -98,16 +98,21 @@ $(document).ready(function(){
       map.panTo(e.layer.getLatLng());
 
       e.layer.openPopup();
-      $(".marker-info").html('<button type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
+      $(".marker-info").html('<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
       $(".marker-info").show();
+      $(".leaflet-popup").addClass("bikerack-info");
 
-      // $("#show-comments").on('click', function(){
-      //   console.log('clicked');
-      //   clicked = false;
-      //   console.log($(".leaflet-popup"));
-      //   // e.layer.closePopup();
-      //   $('#map').height();
-      // });
+
+      e.layer.on('closePopup', function(){
+        $(".leaflet-popup").removeClass("bikerack-info");
+      });
+
+      $("#show-comments").on('click', function(){
+        console.log('clicked');
+        $(".leaflet-popup").removeClass("bikerack-info");
+        clicked = false;
+        e.layer.closePopup();
+      });
 
     });
 
@@ -130,6 +135,7 @@ $(document).ready(function(){
   map.on('mouseup', function(e){
     var latlng = e.latlng;
     var save;
+    console.log(clicked);
 
     if(!clicked){
       upTime = Date.now();

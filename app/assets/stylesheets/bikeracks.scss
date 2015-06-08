@@ -7,27 +7,27 @@
   top:0;
   bottom:0;
   width:100%;
-  display: block;
+  margin: 0;
 }
 
+.row-fluid #map{
+  height: 80%;
+  margin: 0;
+}
+.row-fluid > #collapseExample{
+  height: 19%;
+  background-color: lightblue;
+  margin: 0;
 
-
-
-// .row >#map{
-//   height: 80%;
-// }
-
-// #collapseExample{
-//   height: 19%;
-//   background-color: lightblue;
-//   bottom: 0;
-//   top: 0;
-//   display: block;
-// }
+}
 .marker-info{
   display: none;
 }
 
+.bikerack-info{
+  width: 200px;
+  text-align: center;
+}
 
 
 // #map {
