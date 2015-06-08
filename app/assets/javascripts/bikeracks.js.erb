@@ -7,7 +7,9 @@ var mapHeight;
 //html structure variables
 var windowHeight;
 var navbarHeight;
+var mapRowHeight;
 var mapRow;
+var navbar;
 
 //data variables
 var geojson;
@@ -25,22 +27,7 @@ var app = app || {};
 
 $(document).ready(function(){
   //=========================================CREATES MAP
-  L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
-  map = L.mapbox.map('map', 'mapbox.streets')
-    if(window.innerWidth<500){
-      map.setView([41.893974, -87.627945], 16);
-    }
-    else{
-      map.setView([41.893974, -87.627945], 14);
-    }
-
-  map.zoomControl.setPosition('bottomleft');
-  mapHeight = $('#map').height();
-  mapRow = $('.row-fluid')[0]
-
-  console.log("map loaded!")
-
-  getData().done(markerClusters);
+  app.initialize();
 
   map.addEventListener('viewreset', function(){
     console.log("zoom: " + map.getZoom());
@@ -48,119 +35,27 @@ $(document).ready(function(){
     console.log("data points: " + inBounds.length)
 
     mapZoom = map.getZoom();
-    markerClusters();
+    app.markerClusters();
   });
 
   window.onresize = function () {
+    mapRow = $('.row-fluid')[0];
+    navbar = $('.navbar')[0];
 
     windowHeight = window.innerHeight;
+    console.log(windowHeight)
     mapHeight = $('#map').height();
+    navbarHeight = $(navbar).height();
+    mapRowHeight = $(mapRow).height(mapHeight);
 
-    mapRow = $('.row-fluid')[0]
-    $(mapRow).height(mapHeight);
+
     console.log("map row height: " + $(mapRow).height());
     console.log("map height: " + mapHeight);
 
-    // var navbarHeight = $('.navbar')[0]
-    // var navbar = $('.navbar')[0]
     // $(navbar).height()
     // $(row).height() + $(navbar).height();
   }
 
-
-  //=========================================LOADS MARKERS FROM DATABASE
-  function getData() {
-    return $.ajax({
-      url: '/api/markers.json',
-      type: 'get',
-      dataType: 'text',
-      success: function(data){
-        geojson = $.parseJSON(data);
-        console.log("Bikerack geojson data returned!");
-      }
-    });
-  }
-
-  function getInBounds(){
-    var tempLayer = L.mapbox.featureLayer()
-    mapBounds = map.getBounds();
-    inBounds = [];
-
-    L.geoJson({
-        type: 'FeatureCollection',
-        features: geojson
-      })
-      .eachLayer(function(layer) {
-        tempLayer.addLayer(layer);
-    });
-
-    tempLayer.eachLayer(function(marker) {
-      if (mapBounds.contains(marker.getLatLng())) {
-        inBounds.push(marker.feature);
-      }
-    })
-  }
-
-  function markerClusters() {
-    getInBounds();
-
-    if( window.innerWidth<500 ){
-
-      clusterLayer = new L.MarkerClusterGroup({
-        chunkedLoading: true,
-        disableClusteringAtZoom: 18,
-      });
-    }
-    else{
-      clusterLayer = new L.MarkerClusterGroup({
-        chunkedLoading: true,
-        disableClusteringAtZoom: 16,
-      });
-    }
-
-    L.mapbox.featureLayer({
-        type: 'FeatureCollection',
-        features: inBounds
-      })
-      .eachLayer(function(layer) {
-        clusterLayer.addLayer(layer);
-      });
-
-    map.addLayer(clusterLayer);
-
-    clusterLayer.on('click', function(e) {
-      clicked = true;
-      map.panTo(e.layer.getLatLng());
-
-      e.layer.openPopup();
-      $(".marker-info").html('<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
-      $(".marker-info").show();
-      $(".leaflet-popup").addClass("bikerack-info");
-
-
-      e.layer.on('closePopup', function(){
-        $(".leaflet-popup").removeClass("bikerack-info");
-      });
-
-      $("#show-comments").on('click', function(){
-        console.log('clicked');
-        $(".leaflet-popup").removeClass("bikerack-info");
-        clicked = false;
-        e.layer.closePopup();
-      });
-
-    });
-
-    clusterLayer.on('mouseover', function(e) {
-      e.layer.openPopup();
-    });
-
-    clusterLayer.on('mouseout', function(e) {
-      if(!clicked){
-        e.layer.closePopup();
-      }
-    });
-  }
 
   //=========================================ADD MARKER ON CLICK & HOLD
   map.on('mousedown', function mouseState(e) {
@@ -176,7 +71,7 @@ $(document).ready(function(){
       upTime = Date.now();
       if (downTime && (downTime+800) < upTime){
 
-        newLocation(latlng.lng, latlng.lat);
+        app.newLocation(latlng.lng, latlng.lat);
       }
 
       $("#save-marker").on('click', function(){
@@ -286,9 +181,132 @@ $(document).ready(function(){
 
 });//END OF DOCUMENT.READY
 
+app.initialize = function(){
+  L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
+  map = L.mapbox.map('map', 'mapbox.streets')
+  if(window.innerWidth<500){
+    map.setView([41.893974, -87.627945], 16);
+  }
+  else{
+    map.setView([41.893974, -87.627945], 14);
+  }
+
+  map.zoomControl.setPosition('bottomleft');
+  mapHeight = $('#map').height();
+  mapRow = $('.row-fluid')[0]
+
+  console.log("map loaded!")
+
+  app.getData().done(app.markerClusters);
+
+  mapRow = $('.row-fluid')[0];
+  windowHeight = window.innerHeight;
+  mapRowHeight = $(mapRow).height(windowHeight);
+}
+
+
+//=========================================LOADS MARKERS FROM DATABASE
+app.getData = function() {
+  return $.ajax({
+    url: '/api/markers.json',
+    type: 'get',
+    dataType: 'text',
+    success: function(data){
+      geojson = $.parseJSON(data);
+      console.log("Bikerack geojson data returned!");
+    }
+  });
+}
+
+//=========================================GETS MARKERS WITHIN BOUNDS
+
+app.getInBounds = function(){
+  var tempLayer = L.mapbox.featureLayer()
+  mapBounds = map.getBounds();
+  inBounds = [];
+
+  L.geoJson({
+      type: 'FeatureCollection',
+      features: geojson
+    })
+    .eachLayer(function(layer) {
+      tempLayer.addLayer(layer);
+  });
+
+  tempLayer.eachLayer(function(marker) {
+    if (mapBounds.contains(marker.getLatLng())) {
+      inBounds.push(marker.feature);
+    }
+  })
+}
+
+
+//=========================================CREATES MARKER CLUSTERS
+
+app.markerClusters = function() {
+  app.getInBounds();
+
+  if( window.innerWidth<500 ){
+
+    clusterLayer = new L.MarkerClusterGroup({
+      chunkedLoading: true,
+      disableClusteringAtZoom: 18,
+    });
+  }
+  else{
+    clusterLayer = new L.MarkerClusterGroup({
+      chunkedLoading: true,
+      disableClusteringAtZoom: 16,
+    });
+  }
+
+  L.mapbox.featureLayer({
+      type: 'FeatureCollection',
+      features: inBounds
+    })
+    .eachLayer(function(layer) {
+      clusterLayer.addLayer(layer);
+    });
+
+  map.addLayer(clusterLayer);
+
+  clusterLayer.on('click', function(e) {
+    clicked = true;
+    map.panTo(e.layer.getLatLng());
+
+    e.layer.openPopup();
+    $(".marker-info").html('<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
+    $(".marker-info").show();
+    $(".leaflet-popup").addClass("bikerack-info");
+
+
+    e.layer.on('closePopup', function(){
+      $(".leaflet-popup").removeClass("bikerack-info");
+    });
+
+    $("#show-comments").on('click', function(){
+      console.log('clicked');
+      $(".leaflet-popup").removeClass("bikerack-info");
+      clicked = false;
+      e.layer.closePopup();
+    });
+
+  });
+
+  clusterLayer.on('mouseover', function(e) {
+    e.layer.openPopup();
+  });
+
+  clusterLayer.on('mouseout', function(e) {
+    if(!clicked){
+      e.layer.closePopup();
+    }
+  });
+}
+
 
 //creates new marker from click
-function newLocation(lng, lat){
+app.newLocation = function(lng, lat){
 
   newMarker= L.mapbox.featureLayer({
     type: 'Feature',
