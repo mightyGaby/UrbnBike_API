@@ -8,8 +8,10 @@ var mapHeight;
 var windowHeight;
 var navbarHeight;
 var mapRowHeight;
+var contentHeight;
 var mapRow;
 var navbar;
+var changeX;
 
 //data variables
 var geojson;
@@ -43,17 +45,16 @@ $(document).ready(function(){
     navbar = $('.navbar')[0];
 
     windowHeight = window.innerHeight;
-    console.log(windowHeight)
-    mapHeight = $('#map').height();
     navbarHeight = $(navbar).height();
+    contentHeight = windowHeight - contentHeight;
+    mapHeight = $('#map').height(contentHeight*changeX);
     mapRowHeight = $(mapRow).height(mapHeight);
 
+    mapHeight = $('#map').height(contentHeight);
+    mapRowHeight = $(mapRow).height(mapHeight);
 
     console.log("map row height: " + $(mapRow).height());
     console.log("map height: " + mapHeight);
-
-    // $(navbar).height()
-    // $(row).height() + $(navbar).height();
   }
 
 
@@ -184,6 +185,7 @@ $(document).ready(function(){
 app.initialize = function(){
   L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
   map = L.mapbox.map('map', 'mapbox.streets')
+
   if(window.innerWidth<500){
     map.setView([41.893974, -87.627945], 16);
   }
@@ -192,16 +194,20 @@ app.initialize = function(){
   }
 
   map.zoomControl.setPosition('bottomleft');
-  mapHeight = $('#map').height();
-  mapRow = $('.row-fluid')[0]
-
   console.log("map loaded!")
 
   app.getData().done(app.markerClusters);
 
-  mapRow = $('.row-fluid')[0];
+  mapRow = $('.row-fluid')[0]
+  changeX = 1;
+
   windowHeight = window.innerHeight;
-  mapRowHeight = $(mapRow).height(windowHeight);
+  navbarHeight = $(navbar).height();
+
+  contentHeight = windowHeight - contentHeight;
+  mapHeight = $('#map').height(contentHeight*changeX);
+  mapRowHeight = $(mapRow).height(mapHeight);
+
 }
 
 
@@ -246,7 +252,7 @@ app.getInBounds = function(){
 app.markerClusters = function() {
   app.getInBounds();
 
-  if( window.innerWidth<500 ){
+  if( window.innerWidth < 500 ){
 
     clusterLayer = new L.MarkerClusterGroup({
       chunkedLoading: true,
