@@ -1,22 +1,28 @@
 var map;
 var mapBounds;
+var mapZoom;
 var geojson;
 var downTime;
 var upTime;
 var clusterLayer;
+var newMarker;
 
+
+var clicked;
 var inBounds = [];
 var locateZoom = 15;
 
 var app = app || {};
 
 $(document).ready(function(){
-
   //=========================================CREATES MAP
   L.mapbox.accessToken = 'pk.eyJ1IjoiZ2FicmllbGxlaWRhcnVpemZ1bmVzIiwiYSI6IjNjNGQ5MjM3MmMxMGI1YzNlMDJlZDZlYzA3NTc5NTJhIn0.rN0bLsGk3EFALg_1zo09eg';
   map = L.mapbox.map('map', 'mapbox.streets')
       .setView([41.893974, -87.627945], 14);
+
+      L.control.fullscreen().addTo(map);
       map.zoomControl.setPosition('bottomleft');
+
 
   console.log("map loaded!")
 
@@ -27,9 +33,13 @@ $(document).ready(function(){
     console.log("map move!");
     console.log("data points: " + inBounds.length)
 
-    var mapZoom = map.getZoom();
+    mapZoom = map.getZoom();
     markerClusters();
   });
+
+  $(function () {
+    $('[data-toggle="popover"]').popover()
+  })
 
 
   //=========================================LOADS MARKERS FROM DATABASE
@@ -84,26 +94,33 @@ $(document).ready(function(){
     map.addLayer(clusterLayer);
 
     clusterLayer.on('click', function(e) {
+      clicked = true;
       map.panTo(e.layer.getLatLng());
+
+      e.layer.openPopup();
+      $(".marker-info").html('<button type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
+      $(".marker-info").show();
+
+      // $("#show-comments").on('click', function(){
+      //   console.log('clicked');
+      //   clicked = false;
+      //   console.log($(".leaflet-popup"));
+      //   // e.layer.closePopup();
+      //   $('#map').height();
+      // });
+
     });
 
-  }
+    clusterLayer.on('mouseover', function(e) {
+      e.layer.openPopup();
+    });
 
-  // //=========================================RENDER MAREKERS NOT IN CLUSTER
-  // function renderMarkers() {
-  //   getInBounds();
-  //
-  //   markerLayer = L.mapbox.featureLayer({
-  //       type: 'FeatureCollection',
-  //       features: inBounds
-  //   })
-  //   .addTo(map);
-  //
-  //   markerLayer.on('click', function(e) {
-  //     map.panTo(e.layer.getLatLng());
-  //   });
-  //
-  // }
+    clusterLayer.on('mouseout', function(e) {
+      if(!clicked){
+        e.layer.closePopup();
+      }
+    });
+  }
 
   //=========================================ADD MARKER ON CLICK & HOLD
   map.on('mousedown', function mouseState(e) {
@@ -111,19 +128,40 @@ $(document).ready(function(){
   });
 
   map.on('mouseup', function(e){
-    upTime = Date.now();
-    if (downTime && (downTime+1000) < upTime){
+    var latlng = e.latlng;
+    var save;
 
-      console.log(downTime)
-      console.log(upTime)
+    if(!clicked){
+      upTime = Date.now();
+      if (downTime && (downTime+800) < upTime){
 
-      var latlng = e.latlng;
-      newLocation(latlng.lng, latlng.lat);
+        newLocation(latlng.lng, latlng.lat);
+      }
 
-      var popup = L.popup()
-      .setLatLng(newLocation);
-      .setContent('<button>new marker!</button>')
-      .openOn(map);
+      $("#save-marker").on('click', function(){
+        save = true;
+        $.ajax({
+          url: '/bikeracks',
+          type: 'post',
+          dataType: 'json',
+          data: {
+            bikerack: {
+              address: "TEST",
+              neighborhood: "TEST",
+              lat: latlng.lng,
+              lng: latlng.lat,
+              location: [latlng.lng, latlng.lat]
+            }
+          },
+          success: function(){
+            console.log('marker saved!');
+          }
+        });
+      })
+
+      // if(!save){
+      //   map.removeLayer(newMarker);
+      // }
 
     }
     else{ console.log("click-hold not long enough")}
@@ -209,7 +247,8 @@ $(document).ready(function(){
 
 //creates new marker from click
 function newLocation(lng, lat){
-  var newMarker = L.mapbox.featureLayer({
+
+  newMarker= L.mapbox.featureLayer({
     type: 'Feature',
     geometry: {
         type: 'Point',
@@ -222,8 +261,8 @@ function newLocation(lng, lat){
         'className': 'newMarker'
     },
     draggable: true
-  });
-
-  newMarker.addTo(map);
+  })
+  .bindPopup('<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal" id="save-marker">Save Marker</button>')
+  .addTo(map);
 
 };

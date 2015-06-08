@@ -7,22 +7,26 @@
   top:0;
   bottom:0;
   width:100%;
-  z-index: 1;
+  display: block;
 }
 
-#loading-giph{
-  margin: 0 auto;
-  width: 200px;
-}
 
-.map .tabs-ui {
-  position:relative;
-  min-height:200px;
-  width:240px;
-  clear:both;
-  margin:25px 0;
-}
 
+
+// .row >#map{
+//   height: 80%;
+// }
+
+// #collapseExample{
+//   height: 19%;
+//   background-color: lightblue;
+//   bottom: 0;
+//   top: 0;
+//   display: block;
+// }
+.marker-info{
+  display: none;
+}
 
 
 

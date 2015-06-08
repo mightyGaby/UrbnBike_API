@@ -38,7 +38,7 @@ class BikeracksController < ApplicationController
         },
         properties: {
           title: bikerack.neighborhood,
-          description: bikerack.address,
+          description: bikerack.address + '</br><div class="marker-info"></div>',
           :'marker-color' => '#00607d',
           :'marker-symbol' => 'bicycle',
           :'marker-size' => 'large',
