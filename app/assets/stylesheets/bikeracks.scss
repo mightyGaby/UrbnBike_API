@@ -1,7 +1,6 @@
 // Place all the styles related to the bikeracks controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
-
 #map {
   position:absolute;
   top:0;
@@ -11,10 +10,16 @@
   margin: 0;
 }
 
-.row-fluid > #collapseExample{
-  height: 19%;
+.row-fluid > #bikecomments{
+  height: 18%;
   background-color: lightblue;
   margin: 0;
+  display: none;
+}
+
+.row-fluid{
+  margin: 0;
+  padding: 0;
 }
 .marker-info{
   display: none;

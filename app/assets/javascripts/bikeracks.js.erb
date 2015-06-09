@@ -5,13 +5,17 @@ var mapZoom;
 var mapHeight;
 
 //html structure variables
-var windowHeight;
-var navbarHeight;
 var mapRowHeight;
 var contentHeight;
-var mapRow;
+var commentRowHeight;
 var navbar;
 var changeX;
+
+var containerMain;
+var mapRow;
+var commentRow;
+var windowHeight;
+var navbarHeight;
 
 //data variables
 var geojson;
@@ -40,22 +44,23 @@ $(document).ready(function(){
     app.markerClusters();
   });
 
-  window.onresize = function () {
+  map.addEventListener('resize', function() {
+    console.log('map change!');
+    containerMain = $('.container-fluid')[0]
     mapRow = $('.row-fluid')[0];
     navbar = $('.navbar')[0];
 
     windowHeight = window.innerHeight;
     navbarHeight = $(navbar).height();
     contentHeight = windowHeight - contentHeight;
-    mapHeight = $('#map').height(contentHeight*changeX);
-    mapRowHeight = $(mapRow).height(mapHeight);
+    $(containerMain).height(windowHeight);
 
-    mapHeight = $('#map').height(contentHeight);
+    mapHeight = $('#map').height(contentHeight*changeX);
     mapRowHeight = $(mapRow).height(mapHeight);
 
     console.log("map row height: " + $(mapRow).height());
     console.log("map height: " + mapHeight);
-  }
+  })
 
 
   //=========================================ADD MARKER ON CLICK & HOLD
@@ -193,21 +198,31 @@ app.initialize = function(){
     map.setView([41.893974, -87.627945], 14);
   }
 
+  var southWest = L.latLng(41.644286, -87.523661),
+    northEast = L.latLng(42.023135, -87.940101),
+    bounds = L.latLngBounds(southWest, northEast);
+
+  map.setMaxBounds(bounds);
+  map.minZoom = 10;
   map.zoomControl.setPosition('bottomleft');
   console.log("map loaded!")
 
   app.getData().done(app.markerClusters);
 
-  mapRow = $('.row-fluid')[0]
   changeX = 1;
-
+  containerMain = $('.container-fluid')[0];
+  mapRow = $('.row-fluid')[0];
+  commentRow = $('.row-fluid')[1];
   windowHeight = window.innerHeight;
   navbarHeight = $(navbar).height();
+  mapRowHeight = $(mapRow).height();
 
-  contentHeight = windowHeight - contentHeight;
-  mapHeight = $('#map').height(contentHeight*changeX);
-  mapRowHeight = $(mapRow).height(mapHeight);
 
+  $(containerMain).height(windowHeight);
+
+  contentHeight = windowHeight - navbarHeight;
+  mapHeight = $('#map').height(contentHeight);
+  mapRowHeight = mapHeight;
 }
 
 
@@ -281,9 +296,8 @@ app.markerClusters = function() {
     map.panTo(e.layer.getLatLng());
 
     e.layer.openPopup();
-    $(".marker-info").html('<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" id="show-comments">Show Comments</button>')
+    $(".marker-info").html('<button class="btn btn-primary" type="button" aria-expanded="false" aria-controls="bikecomments" id="show-comments">Show Comments</button>')
     $(".marker-info").show();
-    $(".leaflet-popup").addClass("bikerack-info");
 
 
     e.layer.on('closePopup', function(){
@@ -291,10 +305,15 @@ app.markerClusters = function() {
     });
 
     $("#show-comments").on('click', function(){
+
       console.log('clicked');
-      $(".leaflet-popup").removeClass("bikerack-info");
       clicked = false;
-      e.layer.closePopup();
+      changeX = .8;
+
+      $(commentRow).show();
+      mapHeight = $('#map').height(contentHeight * changeX);
+      mapRowHeight = $(mapRow).height(mapHeight);
+      commentRowHeight = $(commentRow).height(contentHeight-mapHeight);
     });
 
   });
