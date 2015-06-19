@@ -11,5 +11,4 @@
 // about supported directives.
 //
 //= require jquery
-//= require_tree ./views
 //= require_tree .
