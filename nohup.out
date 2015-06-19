@@ -17,3 +17,21 @@
 	from /Users/Gaby/.rbenv/versions/2.1.2/lib/ruby/gems/2.1.0/gems/rack-1.6.1/bin/rackup:4:in `<top (required)>'
 	from /Users/Gaby/.rbenv/versions/2.1.2/bin/rackup:23:in `load'
 	from /Users/Gaby/.rbenv/versions/2.1.2/bin/rackup:23:in `<main>'
+[2015-06-19 16:21:51] INFO  WEBrick 1.3.1
+[2015-06-19 16:21:51] INFO  ruby 1.9.3 (2013-11-22) [x86_64-linux]
+[2015-06-19 16:21:51] WARN  TCPServer Error: Address already in use - bind(2)
+/usr/lib/ruby/1.9.1/webrick/utils.rb:85:in `initialize': Address already in use - bind(2) (Errno::EADDRINUSE)
+	from /usr/lib/ruby/1.9.1/webrick/utils.rb:85:in `new'
+	from /usr/lib/ruby/1.9.1/webrick/utils.rb:85:in `block in create_listeners'
+	from /usr/lib/ruby/1.9.1/webrick/utils.rb:82:in `each'
+	from /usr/lib/ruby/1.9.1/webrick/utils.rb:82:in `create_listeners'
+	from /usr/lib/ruby/1.9.1/webrick/server.rb:82:in `listen'
+	from /usr/lib/ruby/1.9.1/webrick/server.rb:70:in `initialize'
+	from /usr/lib/ruby/1.9.1/webrick/httpserver.rb:45:in `initialize'
+	from /var/lib/gems/1.9.1/gems/rack-1.6.1/lib/rack/handler/webrick.rb:32:in `new'
+	from /var/lib/gems/1.9.1/gems/rack-1.6.1/lib/rack/handler/webrick.rb:32:in `run'
+	from /var/lib/gems/1.9.1/gems/rack-1.6.1/lib/rack/server.rb:286:in `start'
+	from /var/lib/gems/1.9.1/gems/rack-1.6.1/lib/rack/server.rb:147:in `start'
+	from /var/lib/gems/1.9.1/gems/rack-1.6.1/bin/rackup:4:in `<top (required)>'
+	from /usr/local/bin/rackup:23:in `load'
+	from /usr/local/bin/rackup:23:in `<main>'
