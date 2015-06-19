@@ -1,4 +1,4 @@
-Bundler.require(*Rails.groups)
+# Bundler.require(*Rails.groups)
 
 require File.expand_path('../boot', __FILE__)
 

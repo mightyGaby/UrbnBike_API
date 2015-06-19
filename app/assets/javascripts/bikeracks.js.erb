@@ -1,3 +1,5 @@
+//*****GLOBAL VARIABLES*******
+
 //map feature variables
 var map;
 var mapBounds;
@@ -30,6 +32,10 @@ var clicked;
 var locateZoom = 15;
 
 var app = app || {};
+
+
+
+//****APPLICATION******
 
 $(document).ready(function(){
   //=========================================CREATES MAP
@@ -184,7 +190,6 @@ $(document).ready(function(){
     }
   });
 
-
 });//END OF DOCUMENT.READY
 
 app.initialize = function(){
@@ -296,7 +301,8 @@ app.markerClusters = function() {
     map.panTo(e.layer.getLatLng());
 
     e.layer.openPopup();
-    $(".marker-info").html('<button class="btn btn-primary" type="button" aria-expanded="false" aria-controls="bikecomments" id="show-comments">Show Comments</button>')
+    // $(".marker-info").html('<button type="button" aria-expanded="false" aria-controls="bikecomments" id="show-comments">Show Comments</button>')
+    $('.test').scrollspy({ target: '#navbar-example' })
     $(".marker-info").show();
 
 
@@ -310,10 +316,10 @@ app.markerClusters = function() {
       clicked = false;
       changeX = .8;
 
-      $(commentRow).show();
-      mapHeight = $('#map').height(contentHeight * changeX);
-      mapRowHeight = $(mapRow).height(mapHeight);
-      commentRowHeight = $(commentRow).height(contentHeight-mapHeight);
+      // $(commentRow).show();
+      // mapHeight = $('#map').height(contentHeight * changeX);
+      // mapRowHeight = $(mapRow).height(mapHeight);
+      // commentRowHeight = $(commentRow).height(contentHeight-mapHeight);
     });
 
   });
@@ -351,3 +357,7 @@ app.newLocation = function(lng, lat){
   .addTo(map);
 
 };
+
+// var thefts = L.mapbox.featureLayer()
+//     .loadURL('/thefts.json')
+//     .addTo(map);
