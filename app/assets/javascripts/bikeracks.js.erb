@@ -240,6 +240,7 @@ app.getData = function() {
     success: function(data){
       geojson = $.parseJSON(data);
       console.log("Bikerack geojson data returned!");
+      console.log(data);
     }
   });
 }
