@@ -21,8 +21,8 @@ default: &default
   # http://guides.rubyonrails.org/configuring.html#database-pooling
   pool: 5
   host: localhost
-  username: pguser
-  password: Chl03rufu
+  username: UrbnBike_API
+  password:  <%= ENV['UrbnBike_API_DATABASE_PASSWORD'] %>
 
 
 development:
